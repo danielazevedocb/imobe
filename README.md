@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Imobe
 
-## Getting Started
+Micro SaaS para proprietários e corretores autônomos gerenciarem imóveis, rendimentos e contratos.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router)
+- TypeScript
+- Supabase (Auth + Database)
+- Tailwind CSS v4 + shadcn/ui
+- TanStack Query + React Hook Form + Zod
+
+## Configuração
+
+1. Instale dependências:
+
+```bash
+npm install
+```
+
+2. Crie um projeto em [supabase.com](https://supabase.com) e copie as credenciais para `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+```
+
+3. Execute os scripts SQL em ordem no Supabase Dashboard → SQL Editor (veja [`supabase/README.md`](supabase/README.md)):
+
+- `supabase/001_profiles.sql`
+- `supabase/002_properties.sql`
+
+4. Em **Authentication → Providers → Email**, desabilite "Confirm email" em desenvolvimento para login imediato após cadastro.
+
+5. Inicie o servidor:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rotas principais
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Rota            | Descrição               |
+| --------------- | ----------------------- |
+| `/`             | Landing page            |
+| `/cadastro`     | Criar conta             |
+| `/login`        | Entrar                  |
+| `/dashboard`    | Painel (protegido)      |
+| `/imoveis`      | Listagem de imóveis     |
+| `/imoveis/novo` | Cadastrar imóvel        |
+| `/imoveis/[id]` | Detalhes do imóvel      |
+| `/contratos`    | Contratos (placeholder) |
 
-## Learn More
+## Estrutura
 
-To learn more about Next.js, take a look at the following resources:
+Segue o padrão do projeto: `page.tsx` + `_components/` + `_actions/` + `_data-access/` por feature.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Proteção de rotas via `src/proxy.ts` (convenção Next.js 16).
