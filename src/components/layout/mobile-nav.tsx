@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, FileText, LayoutDashboard, Menu, X } from "lucide-react";
+import { Building2, Menu, X } from "lucide-react";
 
+import { LogoutButton } from "@/components/layout/logout-button";
+import { navItems } from "@/components/layout/nav-items";
 import { NavLink } from "@/components/layout/nav-link";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/imoveis", label: "Imóveis", icon: Building2 },
-  { href: "/contratos", label: "Contratos", icon: FileText },
-];
 
 type MobileNavProps = {
   userSlot?: React.ReactNode;
@@ -24,7 +19,10 @@ export function MobileNav({ userSlot }: MobileNavProps) {
   return (
     <>
       <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 font-semibold"
+        >
           <Building2 className="h-5 w-5 text-primary" />
           Imobe
         </Link>
@@ -38,7 +36,7 @@ export function MobileNav({ userSlot }: MobileNavProps) {
         </Button>
       </header>
 
-      {isOpen && (
+      {isOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
             className="absolute inset-0 bg-black/50"
@@ -61,21 +59,19 @@ export function MobileNav({ userSlot }: MobileNavProps) {
                 <NavLink
                   key={item.href}
                   href={item.href}
+                  label={item.label}
+                  icon={<item.icon className="h-4 w-4" />}
                   onClick={() => setIsOpen(false)}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </NavLink>
+                />
               ))}
             </nav>
-            {userSlot && (
-              <div className={cn("border-t border-sidebar-border p-4")}>
-                {userSlot}
-              </div>
-            )}
+            <div className="flex flex-col gap-3 border-t border-sidebar-border p-4">
+              {userSlot}
+              <LogoutButton />
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }
