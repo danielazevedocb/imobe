@@ -26,6 +26,7 @@ export type Property = {
   rent_available: boolean;
   sale_available: boolean;
   deleted_at: string | null;
+  photo_collection_version: number;
   created_at: string;
   updated_at: string;
 };

@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/imoveis", "/contratos"];
+const protectedRoutes = ["/dashboard", "/imoveis", "/contratos", "/perfil"];
 const authRoutes = ["/login", "/cadastro"];
 
 function applyCookies(from: NextResponse, to: NextResponse) {

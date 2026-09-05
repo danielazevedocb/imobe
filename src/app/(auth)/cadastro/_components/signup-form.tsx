@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { signupAction } from "@/app/(auth)/cadastro/_actions/signup-action";
 import {
   signupSchema,
-  type SignupInput,
+  type SignupFormInput,
+  type SignupFormValues,
 } from "@/app/(auth)/cadastro/_actions/signup-schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,7 @@ export function SignupForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<SignupInput>({
+  const form = useForm<SignupFormInput, unknown, SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       email: "",
@@ -37,7 +38,7 @@ export function SignupForm() {
     },
   });
 
-  function handleSubmit(values: SignupInput) {
+  function handleSubmit(values: SignupFormValues) {
     startTransition(async () => {
       const result = await signupAction(values);
 
@@ -45,7 +46,7 @@ export function SignupForm() {
         if (result.errors) {
           Object.entries(result.errors).forEach(([field, messages]) => {
             if (messages?.[0]) {
-              form.setError(field as keyof SignupInput, {
+              form.setError(field as keyof SignupFormInput, {
                 message: messages[0],
               });
             }

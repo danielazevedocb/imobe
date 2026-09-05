@@ -16,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { MonthKeyInput } from "@/components/ui/month-key-input";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -94,7 +95,11 @@ export function RentalIncomeForm({ propertyId }: RentalIncomeFormProps) {
               <FormItem>
                 <FormLabel>Mês de referência</FormLabel>
                 <FormControl>
-                  <Input type="month" {...field} disabled={isPending} />
+                  <MonthKeyInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

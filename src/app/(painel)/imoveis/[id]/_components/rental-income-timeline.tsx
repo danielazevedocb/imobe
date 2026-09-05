@@ -5,7 +5,7 @@ import { useTransition } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MonthKeyInput } from "@/components/ui/month-key-input";
 import {
   Select,
   SelectContent,
@@ -94,12 +94,11 @@ export function RentalIncomeTimeline({
           {period === "month" && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Mês</p>
-              <Input
-                type="month"
-                className="w-full sm:w-[180px]"
+              <MonthKeyInput
+                className="w-full sm:w-[280px]"
                 value={monthKey ?? ""}
-                onChange={(event) =>
-                  updateParams("month", event.target.value || undefined)
+                onChange={(nextMonth) =>
+                  updateParams("month", nextMonth || undefined)
                 }
                 disabled={isPending}
               />

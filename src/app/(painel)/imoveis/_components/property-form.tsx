@@ -2,12 +2,22 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { createPropertyAction } from "@/app/(painel)/imoveis/novo/_actions/create-property";
-import { updatePropertyAction } from "@/app/(painel)/imoveis/[id]/editar/_actions/update-property";
+import {
+  commitPropertyCreateAction,
+  commitPropertyUpdateAction,
+  preparePropertyCreateAction,
+  preparePropertyUpdateAction,
+} from "@/app/(painel)/imoveis/_actions/property-photo-actions";
+import { buildKeptPhotoManifest } from "@/lib/utils/property-photo-manifest";
+import {
+  PropertyPhotoPicker,
+  type PropertyPhotoPickerSnapshot,
+  uploadSelectedPropertyPhotos,
+} from "@/app/(painel)/imoveis/_components/property-photo-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,6 +42,7 @@ import {
   PROPERTY_PURPOSE_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/constants/property-labels";
+import type { ExistingPropertyPhotoState } from "@/lib/types/property-photo";
 import type { Property } from "@/lib/types/property";
 import {
   propertySchema,
@@ -42,11 +53,25 @@ import {
 type PropertyFormProps = {
   mode?: "create" | "edit";
   property?: Property;
+  initialPhotos?: ExistingPropertyPhotoState[];
+  photosLoadError?: boolean;
 };
 
-export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
+export function PropertyForm({
+  mode = "create",
+  property,
+  initialPhotos = [],
+  photosLoadError = false,
+}: PropertyFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const photoStateRef = useRef<PropertyPhotoPickerSnapshot>({
+    keptExisting: initialPhotos,
+    newFiles: [],
+    totalCount: initialPhotos.length,
+    canAddMore: initialPhotos.length < 10,
+    errors: [],
+  });
 
   const form = useForm<PropertyFormInput>({
     resolver: zodResolver(propertySchema),
@@ -58,35 +83,106 @@ export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
   const showSaleFields = purpose === "sale" || purpose === "both";
 
   function handleSubmit(values: PropertyFormInput) {
-    startTransition(async () => {
-      const result =
-        mode === "edit" && property
-          ? await updatePropertyAction(property.id, values)
-          : await createPropertyAction(values);
+    if (mode === "edit" && photosLoadError) {
+      toast.error(
+        "Não foi possível carregar as fotos deste imóvel. Recarregue a página antes de salvar.",
+      );
+      return;
+    }
 
-      if (!result.success) {
-        if (result.errors) {
-          Object.entries(result.errors).forEach(([field, messages]) => {
-            if (messages?.[0]) {
-              form.setError(field as keyof PropertyFormInput, {
-                message: messages[0],
+    startTransition(async () => {
+      const operationKey = crypto.randomUUID();
+      const photoState = photoStateRef.current;
+
+      try {
+        if (mode === "edit" && property) {
+          const manifest = buildKeptPhotoManifest(photoState.keptExisting);
+          const prepareResult = await preparePropertyUpdateAction({
+            operationKey,
+            propertyId: property.id,
+            values,
+            photoManifest: manifest,
+            expectedPhotoVersion: property.photo_collection_version,
+          });
+
+          if (!prepareResult.success) {
+            toast.error(prepareResult.message);
+            return;
+          }
+
+          if (photoState.newFiles.length > 0) {
+            await uploadSelectedPropertyPhotos({
+              operationId: prepareResult.operationId,
+              files: photoState.newFiles,
+            });
+          }
+
+          const result = await commitPropertyUpdateAction({
+            operationKey,
+            expectedPhotoVersion: property.photo_collection_version,
+            propertyId: property.id,
+          });
+
+          if (!result.success) {
+            if (result.errors) {
+              Object.entries(result.errors).forEach(([field, messages]) => {
+                if (messages?.[0]) {
+                  form.setError(field as keyof PropertyFormInput, {
+                    message: messages[0],
+                  });
+                }
               });
             }
+            toast.error(result.message ?? "Não foi possível salvar o imóvel.");
+            return;
+          }
+
+          toast.success("Imóvel atualizado com sucesso!");
+          router.push(`/imoveis/${result.propertyId}`);
+          router.refresh();
+          return;
+        }
+
+        const prepareResult = await preparePropertyCreateAction(operationKey, values);
+
+        if (!prepareResult.success) {
+          toast.error(prepareResult.message);
+          return;
+        }
+
+        if (photoState.newFiles.length > 0) {
+          await uploadSelectedPropertyPhotos({
+            operationId: prepareResult.operationId,
+            files: photoState.newFiles,
           });
         }
-        if (result.message) {
-          toast.error(result.message);
-        }
-        return;
-      }
 
-      toast.success(
-        mode === "edit"
-          ? "Imóvel atualizado com sucesso!"
-          : "Imóvel cadastrado com sucesso!",
-      );
-      router.push(`/imoveis/${result.propertyId}`);
-      router.refresh();
+        const result = await commitPropertyCreateAction(operationKey);
+
+        if (!result.success) {
+          if (result.errors) {
+            Object.entries(result.errors).forEach(([field, messages]) => {
+              if (messages?.[0]) {
+                form.setError(field as keyof PropertyFormInput, {
+                  message: messages[0],
+                });
+              }
+            });
+          }
+          toast.error(result.message ?? "Não foi possível cadastrar o imóvel.");
+          return;
+        }
+
+        toast.success("Imóvel cadastrado com sucesso!");
+        router.push(`/imoveis/${result.propertyId}`);
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível concluir a operação.",
+        );
+      }
     });
   }
 
@@ -106,10 +202,7 @@ export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
@@ -224,11 +317,7 @@ export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
                 <FormItem className="sm:col-span-2">
                   <FormLabel>Link do anúncio (opcional)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="url"
-                      placeholder="https://..."
-                      {...field}
-                    />
+                    <Input type="url" placeholder="https://..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -305,10 +394,7 @@ export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Finalidade</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a finalidade" />
@@ -418,6 +504,25 @@ export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
           )}
         </section>
 
+        <Separator />
+
+        {photosLoadError ? (
+          <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            Não foi possível carregar as fotos deste imóvel. Recarregue a página
+            antes de salvar alterações.
+          </section>
+        ) : (
+          <PropertyPhotoPicker
+            key={property?.id ?? "create"}
+            mode={mode}
+            initialExisting={initialPhotos}
+            disabled={isPending}
+            onStateChange={(state) => {
+              photoStateRef.current = state;
+            }}
+          />
+        )}
+
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             type="button"
@@ -427,7 +532,7 @@ export function PropertyForm({ mode = "create", property }: PropertyFormProps) {
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || photosLoadError}>
             {isPending
               ? "Salvando..."
               : mode === "edit"

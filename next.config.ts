@@ -7,6 +7,11 @@ const allowedDevOrigins = process.env.ALLOWED_DEV_ORIGINS
 const nextConfig: NextConfig = {
   reactCompiler: true,
   allowedDevOrigins,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
+  },
 };
 
 export default nextConfig;

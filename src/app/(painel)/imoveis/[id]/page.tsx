@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { PropertyDetail } from "@/app/(painel)/imoveis/_components/property-detail";
 import { getPropertyById } from "@/app/(painel)/imoveis/_data-access/get-property-by-id";
+import { getPropertyPhotos } from "@/app/(painel)/imoveis/_data-access/get-property-photos";
 import { getContractsByPropertyId } from "@/app/(painel)/contratos/_data-access/get-contracts";
 import { getRentalIncomesByPropertyId } from "@/app/(painel)/imoveis/[id]/_data-access/get-rental-incomes";
 import { getCurrentMonthKey, type RentalIncomePeriod } from "@/lib/format/date";
@@ -44,10 +45,14 @@ export default async function PropertyPage({
   const period = parsePeriod(query.period);
   const monthKey = query.month ?? getCurrentMonthKey();
 
-  const [property, allIncomes, contracts] = await Promise.all([
+  const [property, allIncomes, contracts, photosResult] = await Promise.all([
     getPropertyById(id),
     getRentalIncomesByPropertyId(id),
     getContractsByPropertyId(id),
+    getPropertyPhotos(id).then(
+      (photos) => ({ photos, loadError: false }),
+      () => ({ photos: [], loadError: true }),
+    ),
   ]);
 
   const filteredIncomes = filterIncomesByPeriod(allIncomes, period, monthKey);
@@ -56,6 +61,8 @@ export default async function PropertyPage({
   return (
     <PropertyDetail
       property={property}
+      photos={photosResult.photos}
+      photosLoadError={photosResult.loadError}
       incomes={filteredIncomes}
       incomeSummary={summary}
       incomePeriod={period}

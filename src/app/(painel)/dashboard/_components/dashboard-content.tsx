@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Building2, FileText, TrendingUp, Wallet } from "lucide-react";
 
 import type { DashboardSummary } from "@/app/(painel)/dashboard/_data-access/get-dashboard-summary";
+import type { QuickPaymentPropertyOption } from "@/lib/types/quick-payment";
+import { QuickPaymentDialog } from "@/app/(painel)/dashboard/_components/quick-payment-dialog";
 import { EmptyState } from "@/app/(painel)/imoveis/_components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +17,7 @@ import { formatCurrency } from "@/lib/format/currency";
 
 type DashboardContentProps = {
   summary: DashboardSummary;
+  quickPaymentProperties: QuickPaymentPropertyOption[];
 };
 
 function MetricCard({
@@ -42,16 +45,22 @@ function MetricCard({
   );
 }
 
-export function DashboardContent({ summary }: DashboardContentProps) {
+export function DashboardContent({
+  summary,
+  quickPaymentProperties,
+}: DashboardContentProps) {
   const isEmpty = summary.totalProperties === 0;
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Visão geral da sua carteira de imóveis.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Visão geral da sua carteira de imóveis.
+          </p>
+        </div>
+        <QuickPaymentDialog properties={quickPaymentProperties} />
       </div>
 
       {isEmpty ? (

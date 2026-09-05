@@ -1,16 +1,15 @@
 "use server";
 
-import { requireAuth } from "@/lib/session";
-import { createClient } from "@/lib/supabase/server";
+import {
+  commitPropertyCreateAction,
+  preparePropertyCreateAction,
+} from "@/app/(painel)/imoveis/_actions/property-photo-actions";
 import {
   propertySchema,
   type PropertyFormInput,
 } from "@/lib/validations/property-schema";
 
-import {
-  toPropertyPayload,
-  type PropertyActionResult,
-} from "../../_actions/property-utils";
+import type { PropertyActionResult } from "../../_actions/property-utils";
 
 export async function createPropertyAction(
   input: PropertyFormInput,
@@ -24,25 +23,15 @@ export async function createPropertyAction(
     };
   }
 
-  const user = await requireAuth();
-  const supabase = await createClient();
-  const payload = toPropertyPayload(validation.data, user.id);
+  const operationKey = crypto.randomUUID();
+  const prepareResult = await preparePropertyCreateAction(operationKey, validation.data);
 
-  const { data, error } = await supabase
-    .from("properties")
-    .insert(payload)
-    .select("id")
-    .single();
-
-  if (error || !data) {
+  if (!prepareResult.success) {
     return {
       success: false,
-      message: "Não foi possível cadastrar o imóvel. Tente novamente.",
+      message: prepareResult.message,
     };
   }
 
-  return {
-    success: true,
-    propertyId: data.id,
-  };
+  return commitPropertyCreateAction(operationKey);
 }

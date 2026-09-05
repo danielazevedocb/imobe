@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { PropertyForm } from "@/app/(painel)/imoveis/_components/property-form";
 import { getPropertyById } from "@/app/(painel)/imoveis/_data-access/get-property-by-id";
+import { getPropertyPhotos } from "@/app/(painel)/imoveis/_data-access/get-property-photos";
+import type { ExistingPropertyPhotoState } from "@/lib/types/property-photo";
 
 type EditPropertyPageProps = {
   params: Promise<{ id: string }>;
@@ -28,6 +30,22 @@ export default async function EditPropertyPage({
   const { id } = await params;
   const property = await getPropertyById(id);
 
+  let initialPhotos: ExistingPropertyPhotoState[] = [];
+  let photosLoadError = false;
+
+  try {
+    const photos = await getPropertyPhotos(id);
+    initialPhotos = photos.map((photo) => ({
+      id: photo.id,
+      previewUrl: `/api/property-photos/${photo.id}`,
+      originalName: photo.original_name,
+      sortOrder: photo.sort_order,
+      markedForRemoval: false,
+    }));
+  } catch {
+    photosLoadError = true;
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -36,7 +54,12 @@ export default async function EditPropertyPage({
           Atualize as informações do imóvel selecionado.
         </p>
       </div>
-      <PropertyForm mode="edit" property={property} />
+      <PropertyForm
+        mode="edit"
+        property={property}
+        initialPhotos={initialPhotos}
+        photosLoadError={photosLoadError}
+      />
     </div>
   );
 }

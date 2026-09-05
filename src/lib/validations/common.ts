@@ -18,7 +18,26 @@ export const positiveMoney = z
 
 export const monthKeySchema = z
   .string()
-  .regex(/^\d{4}-\d{2}$/, "Informe o mês no formato AAAA-MM");
+  .regex(/^\d{4}-\d{2}$/, "Informe o mês no formato AAAA-MM")
+  .superRefine((value, ctx) => {
+    const [yearPart, monthPart] = value.split("-");
+    const year = Number(yearPart);
+    const month = Number(monthPart);
+
+    if (year < 1 || year > 9999) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe um ano válido",
+      });
+    }
+
+    if (month < 1 || month > 12) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe um mês válido",
+      });
+    }
+  });
 
 function stripDocument(value: string): string {
   return value.replace(/\D/g, "");

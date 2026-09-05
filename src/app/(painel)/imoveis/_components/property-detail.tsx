@@ -24,11 +24,15 @@ import {
 import { formatCurrency } from "@/lib/format/currency";
 import type { RentalIncomePeriod } from "@/lib/format/date";
 import type { ContractListItem } from "@/lib/types/contract";
+import { PropertyPhotoGallery } from "@/app/(painel)/imoveis/[id]/_components/property-photo-gallery";
+import type { PropertyPhoto } from "@/lib/types/property-photo";
 import type { Property } from "@/lib/types/property";
 import type { RentalIncome, RentalIncomeSummary } from "@/lib/types/rental-income";
 
 type PropertyDetailProps = {
   property: Property;
+  photos: PropertyPhoto[];
+  photosLoadError?: boolean;
   incomes: RentalIncome[];
   incomeSummary: RentalIncomeSummary;
   incomePeriod: RentalIncomePeriod;
@@ -38,6 +42,8 @@ type PropertyDetailProps = {
 
 export function PropertyDetail({
   property,
+  photos,
+  photosLoadError = false,
   incomes,
   incomeSummary,
   incomePeriod,
@@ -165,6 +171,13 @@ export function PropertyDetail({
           </CardContent>
         </Card>
       </div>
+
+      <PropertyPhotoGallery
+        propertyId={property.id}
+        propertyLabel={property.address_street}
+        photos={photos}
+        loadError={photosLoadError}
+      />
 
       <RentalIncomeSection
         property={property}
