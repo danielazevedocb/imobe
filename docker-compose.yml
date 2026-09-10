@@ -1,0 +1,29 @@
+services:
+  imobe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
+    container_name: imobe
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.imobe.rule=Host(`imobe.azconnect.online`)"
+      - "traefik.http.routers.imobe.entrypoints=web"
+      - "traefik.http.services.imobe.loadbalancer.server.port=3000"
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
