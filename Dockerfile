@@ -2,8 +2,18 @@ FROM node:22-alpine AS deps
 
 WORKDIR /app
 
+ENV HUSKY=0
+
 COPY package.json package-lock.json ./
-RUN npm ci
+
+RUN npm config set registry https://registry.npmjs.org/ \
+    && npm config set maxsockets 2 \
+    && npm config set fetch-retries 5 \
+    && npm config set fetch-retry-factor 2 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm config set fetch-timeout 600000 \
+    && npm ci --no-audit --no-fund
 
 
 FROM node:22-alpine AS builder
@@ -27,6 +37,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV HUSKY=0
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
