@@ -77,7 +77,8 @@ export default function MarketingPage() {
 
       <footer className="border-t py-8">
         <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground sm:px-6">
-          © {new Date().getFullYear()} Imobe. Todos os direitos reservados.
+          © {new Date().getFullYear()} Imobe. Todos os direitos reservados
+          testesteste.
         </div>
       </footer>
     </div>
