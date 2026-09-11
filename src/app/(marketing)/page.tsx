@@ -8,7 +8,10 @@ export default function MarketingPage() {
     <div className="flex min-h-full flex-col">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-xl">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-semibold text-xl"
+          >
             <Building2 className="h-6 w-6 text-primary" />
             Imobe
           </Link>
@@ -33,8 +36,8 @@ export default function MarketingPage() {
               Gerencie seus imóveis com clareza
             </h1>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-              Cadastre imóveis, acompanhe rendimentos de aluguel e gere contratos
-              em PDF — tudo em uma área privada, simples e organizada.
+              Cadastre imóveis, acompanhe rendimentos de aluguel e gere
+              contratos em PDF e tudo em uma área privada, simples e organizada.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" asChild>
